@@ -14,15 +14,17 @@ tf.set_random_seed(1618)
 tf.logging.set_verbosity(tf.logging.ERROR)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-ALGORITHM = "guesser"
-#ALGORITHM = "tf_net"
+#ALGORITHM = "guesser"
+ALGORITHM = "tf_net"
 #ALGORITHM = "tf_conv"
 
-DATASET = "mnist_d"
-#DATASET = "mnist_f"
+#DATASET = "mnist_d" # 512 nuerons/layer, 70 epochs, 
+DATASET = "mnist_f"
 #DATASET = "cifar_10"
 #DATASET = "cifar_100_f"
 #DATASET = "cifar_100_c"
+
+tfNeuronsPerLayer = 512
 
 if DATASET == "mnist_d":
     NUM_CLASSES = 10
@@ -41,19 +43,19 @@ elif DATASET == "cifar_10":
     IH = 32
     IW = 32
     IZ = 1
-    IS = 1024
+    IS = 3072
 elif DATASET == "cifar_100_f": # fine class
     NUM_CLASSES = 100
     IH = 32
     IW = 32
     IZ = 1
-    IS = 1024
+    IS = 3072
 elif DATASET == "cifar_100_c": # coarse class
     NUM_CLASSES = 20
     IH = 32
     IW = 32
     IZ = 1
-    IS = 1024
+    IS = 3072
 
 # ================================ < Classifier Functions > ================================ #
 def guesserClassifier(xTest):
@@ -65,18 +67,17 @@ def guesserClassifier(xTest):
     return np.array(ans)
 
 
-def buildTFNeuralNet(x, y, eps = 6):
+def buildTFNeuralNet(x, y, eps = 70):
     # TODO: Implement a standard ANN here.
     model = keras.Sequential()
     lossType = keras.losses.mean_squared_error
     optimizer = tf.train.AdamOptimizer()
-    # TODO: FIX here mucho problemo
     inShape = (x.shape[1], ) 
     
     model.add(keras.layers.Dense(tfNeuronsPerLayer, input_shape=inShape, activation = 'sigmoid')) 
     model.add(keras.layers.Dense(10, activation = 'softmax'))
     model.compile(optimizer=optimizer, loss=lossType)
-    model.fit(xVals, yVals, epochs=eps)
+    model.fit(x, y, epochs=eps)
     return model
 
 def buildTFConvNet(x, y, eps = 10, dropout = True, dropRate = 0.2):
@@ -88,17 +89,26 @@ def getRawData():
     if DATASET == "mnist_d":
         mnist = tf.keras.datasets.mnist
         (xTrain, yTrain), (xTest, yTest) = mnist.load_data()
+    
     elif DATASET == "mnist_f":
         mnist = tf.keras.datasets.fashion_mnist
         (xTrain, yTrain), (xTest, yTest) = mnist.load_data()
+    
     elif DATASET == "cifar_10":
-        pass      # TODO: Add this case.
+        cifar_10 = tf.keras.datasets.cifar10
+        (xTrain, yTrain), (xTest, yTest) = cifar_10.load_data()
+    
     elif DATASET == "cifar_100_f":
-        pass      # TODO: Add this case.
+        cifar_100 = tf.keras.datasets.cifar100
+        (xTrain, yTrain), (xTest, yTest) = cifar_100.load_data(label_mode='fine')
+    
     elif DATASET == "cifar_100_c":
-        pass      # TODO: Add this case.
+        cifar_100 = tf.keras.datasets.cifar100
+        (xTrain, yTrain), (xTest, yTest) = cifar_100.load_data(label_mode='coarse')
+    
     else:
         raise ValueError("Dataset not recognized.")
+    
     print("Dataset: %s" % DATASET)
     print("Shape of xTrain dataset: %s." % str(xTrain.shape))
     print("Shape of yTrain dataset: %s." % str(yTrain.shape))

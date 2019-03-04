@@ -37,15 +37,25 @@ elif DATASET == "mnist_f":
     IZ = 1
     IS = 784
 elif DATASET == "cifar_10":
-    pass                                 # TODO: Add this case.
-elif DATASET == "cifar_100_f":
-    pass                                 # TODO: Add this case.
-elif DATASET == "cifar_100_c":
-    pass                                 # TODO: Add this case.
+    NUM_CLASSES = 10
+    IH = 32
+    IW = 32
+    IZ = 1
+    IS = 1024
+elif DATASET == "cifar_100_f": # fine class
+    NUM_CLASSES = 100
+    IH = 32
+    IW = 32
+    IZ = 1
+    IS = 1024
+elif DATASET == "cifar_100_c": # coarse class
+    NUM_CLASSES = 20
+    IH = 32
+    IW = 32
+    IZ = 1
+    IS = 1024
 
-
-#=========================<Classifier Functions>================================
-
+# ================================ < Classifier Functions > ================================ #
 def guesserClassifier(xTest):
     ans = []
     for entry in xTest:
@@ -56,16 +66,24 @@ def guesserClassifier(xTest):
 
 
 def buildTFNeuralNet(x, y, eps = 6):
-    pass        #TODO: Implement a standard ANN here.
-    return None
-
+    # TODO: Implement a standard ANN here.
+    model = keras.Sequential()
+    lossType = keras.losses.mean_squared_error
+    optimizer = tf.train.AdamOptimizer()
+    # TODO: FIX here mucho problemo
+    inShape = (x.shape[1], ) 
+    
+    model.add(keras.layers.Dense(tfNeuronsPerLayer, input_shape=inShape, activation = 'sigmoid')) 
+    model.add(keras.layers.Dense(10, activation = 'softmax'))
+    model.compile(optimizer=optimizer, loss=lossType)
+    model.fit(xVals, yVals, epochs=eps)
+    return model
 
 def buildTFConvNet(x, y, eps = 10, dropout = True, dropRate = 0.2):
-    pass        #TODO: Implement a CNN here. dropout option is required.
+    # TODO: Implement a CNN here. dropout option is required.
     return None
 
-#=========================<Pipeline Functions>==================================
-
+# ================================== < Pipeline Functions > ================================== #
 def getRawData():
     if DATASET == "mnist_d":
         mnist = tf.keras.datasets.mnist
@@ -89,7 +107,6 @@ def getRawData():
     return ((xTrain, yTrain), (xTest, yTest))
 
 
-
 def preprocessData(raw):
     ((xTrain, yTrain), (xTest, yTest)) = raw
     if ALGORITHM != "tf_conv":
@@ -107,7 +124,6 @@ def preprocessData(raw):
     return ((xTrainP, yTrainP), (xTestP, yTestP))
 
 
-
 def trainModel(data):
     xTrain, yTrain = data
     if ALGORITHM == "guesser":
@@ -122,10 +138,10 @@ def trainModel(data):
         raise ValueError("Algorithm not recognized.")
 
 
-
 def runModel(data, model):
     if ALGORITHM == "guesser":
         return guesserClassifier(data)
+    
     elif ALGORITHM == "tf_net":
         print("Testing TF_NN.")
         preds = model.predict(data)
@@ -134,6 +150,7 @@ def runModel(data, model):
             oneHot[np.argmax(preds[i])] = 1
             preds[i] = oneHot
         return preds
+    
     elif ALGORITHM == "tf_conv":
         print("Testing TF_CNN.")
         preds = model.predict(data)
@@ -142,9 +159,9 @@ def runModel(data, model):
             oneHot[np.argmax(preds[i])] = 1
             preds[i] = oneHot
         return preds
+    
     else:
         raise ValueError("Algorithm not recognized.")
-
 
 
 def evalResults(data, preds):
@@ -157,18 +174,13 @@ def evalResults(data, preds):
     print("Classifier accuracy: %f%%" % (accuracy * 100))
     print()
 
-
-
-#=========================<Main>================================================
-
+# ================================================ < Main > ================================================ #
 def main():
     raw = getRawData()
     data = preprocessData(raw)
     model = trainModel(data[0])
     preds = runModel(data[1][0], model)
     evalResults(data[1], preds)
-
-
 
 if __name__ == '__main__':
     main()

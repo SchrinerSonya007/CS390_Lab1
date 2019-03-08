@@ -15,49 +15,89 @@ tf.logging.set_verbosity(tf.logging.ERROR)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 #ALGORITHM = "guesser"
-ALGORITHM = "tf_net"
-#ALGORITHM = "tf_conv"
+#ALGORITHM = "tf_net"
+ALGORITHM = "tf_conv"
 
-#DATASET = "mnist_d" # 512 nuerons/layer, 70 epochs, 
+# ================================ < START: Parameters For loading Saved Models Here > ================================ #
+load_model = True
+save_model = True
+# ================================ < END:  Parameters For loading Saved Models Here > ================================ #
+
+#DATASET = "mnist_d"
 DATASET = "mnist_f"
 #DATASET = "cifar_10"
 #DATASET = "cifar_100_f"
 #DATASET = "cifar_100_c"
 
-tfNeuronsPerLayer = 512
-
 if DATASET == "mnist_d":
     NUM_CLASSES = 10
-    IH = 28
-    IW = 28
-    IZ = 1
+    IH = 28 # height
+    IW = 28 # width
+    IZ = 1 # depth
     IS = 784
+    # ANN Hyperparameters - Acc == 95.350000%
+    tf_eps = 70
+    tfNeuronsPerLayer = 512
+    # CNN Hyperparameters - Acc == 99.06%
+    cnn_eps = 25
+    layer1_k = (5, 5)
+    layer2_k = (4, 4)
+    pool_size = (2, 2)
 elif DATASET == "mnist_f":
+    # TODO: THIS IS STILL WRONG!!!!
     NUM_CLASSES = 10
     IH = 28
     IW = 28
     IZ = 1
     IS = 784
+    # ANN Hyperparameters - Acc == 77.540000%
+    tf_eps = 70
+    tfNeuronsPerLayer = 512
+    # CNN Hyperparameters - Acc == AIM 92
+    cnn_eps = 25 # 25 == 90.85, 30 == 90.77, 35 == 90.810000%, 40 eps == 91.26 acc, 45 == 90.630000%, 50 == 91.030000%
+    layer1_k = (3, 3) # (2, 2)
+    layer2_k = (3, 3) # (1, 1)
+    pool_size = (2, 2) # (2, 2)
 elif DATASET == "cifar_10":
     NUM_CLASSES = 10
     IH = 32
     IW = 32
-    IZ = 1
+    IZ = 3
     IS = 3072
+    # ANN Hyperparameters - Acc == 10%
+    tf_eps = 70
+    tfNeuronsPerLayer = 512
+    # CNN Hyperparameters
+    cnn_eps = 20
+    # layer1: (6,6), layer2: (5, 5), pool: (2, 2) == 51.12%
+    layer1_k = (6, 6) 
+    layer2_k = (5, 5)
+    pool_size = (2, 2)
 elif DATASET == "cifar_100_f": # fine class
     NUM_CLASSES = 100
     IH = 32
     IW = 32
     IZ = 1
     IS = 3072
+    # ANN Hyperparameters - Acc == 1%
+    tf_eps = 70
+    tfNeuronsPerLayer = 512
+    # CNN Hyperparameters
+    cnn_eps = 25
 elif DATASET == "cifar_100_c": # coarse class
     NUM_CLASSES = 20
     IH = 32
     IW = 32
     IZ = 1
     IS = 3072
+    # ANN Hyperparameters - Acc == 5.050000%
+    tf_eps = 70
+    tfNeuronsPerLayer = 512
+    # CNN Hyperparameters
+    cnn_eps = 25
 
 # ================================ < Classifier Functions > ================================ #
+# Guesser Classifier
 def guesserClassifier(xTest):
     ans = []
     for entry in xTest:
@@ -66,46 +106,133 @@ def guesserClassifier(xTest):
         ans.append(pred)
     return np.array(ans)
 
-
+# Standard ANN - using Keras
 def buildTFNeuralNet(x, y, eps = 70):
-    # TODO: Implement a standard ANN here.
     model = keras.Sequential()
     lossType = keras.losses.mean_squared_error
     optimizer = tf.train.AdamOptimizer()
     inShape = (x.shape[1], ) 
     
     model.add(keras.layers.Dense(tfNeuronsPerLayer, input_shape=inShape, activation = 'sigmoid')) 
-    model.add(keras.layers.Dense(10, activation = 'softmax'))
+    model.add(keras.layers.Dense(NUM_CLASSES, activation = 'softmax'))
     model.compile(optimizer=optimizer, loss=lossType)
     model.fit(x, y, epochs=eps)
     return model
 
+# Convolutional Network - using Keras with dropouts
 def buildTFConvNet(x, y, eps = 10, dropout = True, dropRate = 0.2):
-    # TODO: Implement a CNN here. dropout option is required.
-    return None
+    model = keras.Sequential()
+    inShape = (IH, IW, IZ) # Input height, width, depth
+    lossType = keras.losses.categorical_crossentropy
+    opt = tf.train.AdamOptimizer()
+
+    if DATASET == 'mnist_d':
+        if load_model:
+            return load_model
+        model = mnist_d_model_layers(model, dropout, inShape)
+    elif DATASET == 'mnist_f':
+        model = mnist_f_model_layers(model, dropout, inShape)
+        print(model)
+    print(model)
+    #elif DATASET == :
+        
+    #elif DATASET == 'mnist_f':
+
+    print('Saving model to ' + DATASET + '_model.h5')
+    '''if dropout:
+                    model.add(keras.layers.Conv2D(32, kernel_size = layer1_k, activation="relu", input_shape=inShape))
+                    model.add(keras.layers.Conv2D(32, kernel_size = layer2_k, activation="relu"))
+                    model.add(keras.layers.MaxPooling2D(pool_size = pool_size, padding='same'))
+                    model.add(keras.layers.Dropout(0.25)) # 0.25
+            
+                    model.add(keras.layers.Conv2D(64, kernel_size = layer1_k, activation="relu"))
+                    model.add(keras.layers.Conv2D(64, kernel_size = layer2_k, activation="relu"))
+                    model.add(keras.layers.MaxPooling2D(pool_size = pool_size))
+                    model.add(keras.layers.Dropout(0.25)) # 0.25
+            
+                    model.add(keras.layers.Flatten())
+                    model.add(keras.layers.Dense(256, activation = 'relu')) # 128
+                    model.add(keras.layers.Dropout(0.5)) # 0.5
+                    model.add(keras.layers.Dense(NUM_CLASSES, activation = 'softmax'))
+                else:
+                    model.add(keras.layers.Conv2D(32, kernel_size = layer1_k, activation="relu", input_shape=inShape))
+                    model.add(keras.layers.Conv2D(64, kernel_size = layer2_k, activation="relu"))
+                    model.add(keras.layers.MaxPooling2D(pool_size = pool_size))
+                    model.add(keras.layers.Flatten())
+                    model.add(keras.layers.Dense(128, activation = 'relu'))
+                    model.add(keras.layers.Dense(NUM_CLASSES, activation = 'softmax'))'''
+    model.compile(optimizer=opt, loss=lossType)
+    model.fit(x, y, epochs = eps)
+    model.save(DATASET + '_model.h5')
+    return model
+
+# Add layers for mnist data set
+def mnist_d_model_layers(model, dropout, inShape):
+    model.add(keras.layers.Conv2D(32, kernel_size = layer1_k, activation="relu", input_shape=inShape))
+    model.add(keras.layers.Conv2D(64, kernel_size = layer2_k, activation="relu"))
+    model.add(keras.layers.MaxPooling2D(pool_size = pool_size))
+    if dropout:
+        model.add(keras.layers.Dropout(0.25)) # 0.25
+
+    model.add(keras.layers.Flatten())
+    model.add(keras.layers.Dense(128, activation = 'relu')) # 128
+    if dropout:
+        model.add(keras.layers.Dropout(0.5)) # 0.5
+    model.add(keras.layers.Dense(NUM_CLASSES, activation = 'softmax'))
+
+    # Save Model
+    if save_model:
+        model.save(DATASET + '_model.h5')
+    return model
+
+def mnist_f_model_layers(model, dropout, inShape):
+    model.add(keras.layers.Conv2D(64, kernel_size = (3, 3), activation="relu", input_shape=inShape))
+    model.add(keras.layers.Conv2D(64, kernel_size = (2, 2), activation="relu"))
+    model.add(keras.layers.MaxPooling2D(pool_size = (2, 2)))
+    if dropout:
+        model.add(keras.layers.Dropout(0.3)) # 0.25
+
+    model.add(keras.layers.Conv2D(64, kernel_size = (3, 3), activation="relu", input_shape=inShape))
+   # model.add(keras.layers.Conv2D(64, kernel_size = (3, 3), activation="relu"))
+    model.add(keras.layers.MaxPooling2D(pool_size = (2, 2)))
+    if dropout:
+        model.add(keras.layers.Dropout(0.3)) # 0.25
+
+    model.add(keras.layers.Flatten())
+    model.add(keras.layers.Dense(128, activation = 'relu')) # 128
+    if dropout:
+        model.add(keras.layers.Dropout(0.5)) # 0.5
+    model.add(keras.layers.Dense(NUM_CLASSES, activation = 'softmax'))
+
+    # Save Model
+    if save_model:
+        model.save(DATASET + '_model.h5')
+    return model
+
+# Load Model
+def load_model():
+    print('Loading saved ')
+    model = keras.models.load_model(DATASET + '_model.h5')
+    return model
 
 # ================================== < Pipeline Functions > ================================== #
+# Load Data
 def getRawData():
     if DATASET == "mnist_d":
         mnist = tf.keras.datasets.mnist
         (xTrain, yTrain), (xTest, yTest) = mnist.load_data()
-    
     elif DATASET == "mnist_f":
         mnist = tf.keras.datasets.fashion_mnist
         (xTrain, yTrain), (xTest, yTest) = mnist.load_data()
-    
     elif DATASET == "cifar_10":
         cifar_10 = tf.keras.datasets.cifar10
         (xTrain, yTrain), (xTest, yTest) = cifar_10.load_data()
-    
     elif DATASET == "cifar_100_f":
         cifar_100 = tf.keras.datasets.cifar100
         (xTrain, yTrain), (xTest, yTest) = cifar_100.load_data(label_mode='fine')
-    
     elif DATASET == "cifar_100_c":
         cifar_100 = tf.keras.datasets.cifar100
         (xTrain, yTrain), (xTest, yTest) = cifar_100.load_data(label_mode='coarse')
-    
     else:
         raise ValueError("Dataset not recognized.")
     
@@ -116,7 +243,7 @@ def getRawData():
     print("Shape of yTest dataset: %s." % str(yTest.shape))
     return ((xTrain, yTrain), (xTest, yTest))
 
-
+# Process Data
 def preprocessData(raw):
     ((xTrain, yTrain), (xTest, yTest)) = raw
     if ALGORITHM != "tf_conv":
@@ -133,25 +260,24 @@ def preprocessData(raw):
     print("New shape of yTest dataset: %s." % str(yTestP.shape))
     return ((xTrainP, yTrainP), (xTestP, yTestP))
 
-
+# Train Model
 def trainModel(data):
     xTrain, yTrain = data
     if ALGORITHM == "guesser":
         return None   # Guesser has no model, as it is just guessing.
     elif ALGORITHM == "tf_net":
         print("Building and training TF_NN.")
-        return buildTFNeuralNet(xTrain, yTrain)
+        return buildTFNeuralNet(xTrain, yTrain, eps=tf_eps)
     elif ALGORITHM == "tf_conv":
         print("Building and training TF_CNN.")
-        return buildTFConvNet(xTrain, yTrain)
+        return buildTFConvNet(xTrain, yTrain, eps=cnn_eps)
     else:
         raise ValueError("Algorithm not recognized.")
 
-
+# Run model
 def runModel(data, model):
     if ALGORITHM == "guesser":
-        return guesserClassifier(data)
-    
+        return guesserClassifier(data)  
     elif ALGORITHM == "tf_net":
         print("Testing TF_NN.")
         preds = model.predict(data)
@@ -159,8 +285,7 @@ def runModel(data, model):
             oneHot = [0] * NUM_CLASSES
             oneHot[np.argmax(preds[i])] = 1
             preds[i] = oneHot
-        return preds
-    
+        return preds    
     elif ALGORITHM == "tf_conv":
         print("Testing TF_CNN.")
         preds = model.predict(data)
@@ -169,11 +294,10 @@ def runModel(data, model):
             oneHot[np.argmax(preds[i])] = 1
             preds[i] = oneHot
         return preds
-    
     else:
         raise ValueError("Algorithm not recognized.")
 
-
+# Evalute results
 def evalResults(data, preds):
     xTest, yTest = data
     acc = 0

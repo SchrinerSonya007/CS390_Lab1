@@ -24,8 +24,8 @@ save_model = True
 # ================================ < END:  Parameters For loading Saved Models Here > ================================ #
 
 #DATASET = "mnist_d"
-DATASET = "mnist_f"
-#DATASET = "cifar_10"
+#DATASET = "mnist_f"
+DATASET = "cifar_10"
 #DATASET = "cifar_100_f"
 #DATASET = "cifar_100_c"
 
@@ -44,7 +44,6 @@ if DATASET == "mnist_d":
     layer2_k = (4, 4)
     pool_size = (2, 2)
 elif DATASET == "mnist_f":
-    # TODO: THIS IS STILL WRONG!!!!
     NUM_CLASSES = 10
     IH = 28
     IW = 28
@@ -54,11 +53,12 @@ elif DATASET == "mnist_f":
     tf_eps = 70
     tfNeuronsPerLayer = 512
     # CNN Hyperparameters - Acc == AIM 92
-    cnn_eps = 25 # 25 == 90.85, 30 == 90.77, 35 == 90.810000%, 40 eps == 91.26 acc, 45 == 90.630000%, 50 == 91.030000%
-    layer1_k = (3, 3) # (2, 2)
-    layer2_k = (3, 3) # (1, 1)
-    pool_size = (2, 2) # (2, 2)
+    cnn_eps = 48 # 25 == 90.85, 30 == 90.77, 35 == 90.810000%, 40 eps == 91.26 acc, 45 == 90.630000%, 50 == 91.030000%
+#layer1_k = (3, 3) # (2, 2)
+#layer2_k = (3, 3) # (1, 1)
+#pool_size = (2, 2) # (2, 2)
 elif DATASET == "cifar_10":
+    # TODO: THIS IS STILL VERY VERY WRONG!!!!
     NUM_CLASSES = 10
     IH = 32
     IW = 32
@@ -74,6 +74,7 @@ elif DATASET == "cifar_10":
     layer2_k = (5, 5)
     pool_size = (2, 2)
 elif DATASET == "cifar_100_f": # fine class
+		# TODO: this too :/
     NUM_CLASSES = 100
     IH = 32
     IW = 32
@@ -85,6 +86,7 @@ elif DATASET == "cifar_100_f": # fine class
     # CNN Hyperparameters
     cnn_eps = 25
 elif DATASET == "cifar_100_c": # coarse class
+		# TODO: this too :/
     NUM_CLASSES = 20
     IH = 32
     IW = 32
@@ -128,14 +130,14 @@ def buildTFConvNet(x, y, eps = 10, dropout = True, dropRate = 0.2):
 
     if DATASET == 'mnist_d':
         if load_model:
-            return load_model
+            return load_model()
         model = mnist_d_model_layers(model, dropout, inShape)
     elif DATASET == 'mnist_f':
+        if load_model:
+            return load_model()
         model = mnist_f_model_layers(model, dropout, inShape)
-        print(model)
-    print(model)
-    #elif DATASET == :
-        
+    elif DATASET == "cifar_10":
+       model = cifar_10_model_layers(model, dropout, inShape)
     #elif DATASET == 'mnist_f':
 
     print('Saving model to ' + DATASET + '_model.h5')
@@ -166,7 +168,7 @@ def buildTFConvNet(x, y, eps = 10, dropout = True, dropRate = 0.2):
     model.save(DATASET + '_model.h5')
     return model
 
-# Add layers for mnist data set
+# Add layers for mnist digit data set
 def mnist_d_model_layers(model, dropout, inShape):
     model.add(keras.layers.Conv2D(32, kernel_size = layer1_k, activation="relu", input_shape=inShape))
     model.add(keras.layers.Conv2D(64, kernel_size = layer2_k, activation="relu"))
@@ -185,21 +187,47 @@ def mnist_d_model_layers(model, dropout, inShape):
         model.save(DATASET + '_model.h5')
     return model
 
+# Add layers for mnist fashion data set
 def mnist_f_model_layers(model, dropout, inShape):
-    model.add(keras.layers.Conv2D(64, kernel_size = (3, 3), activation="relu", input_shape=inShape))
-    model.add(keras.layers.Conv2D(64, kernel_size = (2, 2), activation="relu"))
+    model.add(keras.layers.Conv2D(32, kernel_size = (2, 2), activation="relu", input_shape=inShape))
+    model.add(keras.layers.Conv2D(64, kernel_size = (1, 1), activation="relu"))
     model.add(keras.layers.MaxPooling2D(pool_size = (2, 2)))
     if dropout:
-        model.add(keras.layers.Dropout(0.3)) # 0.25
+        model.add(keras.layers.Dropout(0.25)) # 0.25
 
-    model.add(keras.layers.Conv2D(64, kernel_size = (3, 3), activation="relu", input_shape=inShape))
-   # model.add(keras.layers.Conv2D(64, kernel_size = (3, 3), activation="relu"))
+    model.add(keras.layers.Conv2D(32, kernel_size = (2, 2), activation="relu"))
+    model.add(keras.layers.Conv2D(64, kernel_size = (1, 1), activation="relu"))
     model.add(keras.layers.MaxPooling2D(pool_size = (2, 2)))
     if dropout:
-        model.add(keras.layers.Dropout(0.3)) # 0.25
+        model.add(keras.layers.Dropout(0.25)) # 0.25
 
     model.add(keras.layers.Flatten())
-    model.add(keras.layers.Dense(128, activation = 'relu')) # 128
+    model.add(keras.layers.Dense(256, activation = 'relu')) # 128
+    if dropout:
+        model.add(keras.layers.Dropout(0.5)) # 0.5
+    model.add(keras.layers.Dense(NUM_CLASSES, activation = 'softmax'))
+
+    # Save Model
+    if save_model:
+        model.save(DATASET + '_model.h5')
+    return model
+
+# Add layers for cifar 10 data set
+def cifar_10_model_layers(model, dropout, inShape):
+    model.add(keras.layers.Conv2D(32, kernel_size = (2, 2), activation="relu", input_shape=inShape))
+    model.add(keras.layers.Conv2D(64, kernel_size = (1, 1), activation="relu"))
+    model.add(keras.layers.MaxPooling2D(pool_size = (2, 2)))
+    if dropout:
+        model.add(keras.layers.Dropout(0.25)) # 0.25
+
+    model.add(keras.layers.Conv2D(32, kernel_size = (2, 2), activation="relu"))
+    model.add(keras.layers.Conv2D(64, kernel_size = (1, 1), activation="relu"))
+    model.add(keras.layers.MaxPooling2D(pool_size = (2, 2)))
+    if dropout:
+        model.add(keras.layers.Dropout(0.25)) # 0.25
+
+    model.add(keras.layers.Flatten())
+    model.add(keras.layers.Dense(256, activation = 'relu')) # 128
     if dropout:
         model.add(keras.layers.Dropout(0.5)) # 0.5
     model.add(keras.layers.Dense(NUM_CLASSES, activation = 'softmax'))

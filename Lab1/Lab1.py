@@ -21,8 +21,8 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 ALGORITHM = "tf_conv"
 
 # ================================ < START: Parameters For loading Saved Models Here > ================================ #
-#load_model = True
-load_model = False
+load_model = True
+#load_model = False
 #save_model = True
 save_model = False
 #plot = True 

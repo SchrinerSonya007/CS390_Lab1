@@ -1,10 +1,12 @@
 
 import os
+import random
 import numpy as np
 import tensorflow as tf
+import matplotlib as plt
+
 from tensorflow import keras
 from tensorflow.keras.utils import to_categorical
-import random
 
 
 random.seed(1618)
@@ -26,8 +28,8 @@ save_model = True
 #DATASET = "mnist_d"
 #DATASET = "mnist_f"
 #DATASET = "cifar_10"
-DATASET = "cifar_100_f"
-#DATASET = "cifar_100_c"
+#DATASET = "cifar_100_f"
+DATASET = "cifar_100_c"
 
 if DATASET == "mnist_d":
     NUM_CLASSES = 10
@@ -54,9 +56,6 @@ elif DATASET == "mnist_f":
     tfNeuronsPerLayer = 512
     # CNN Hyperparameters - Acc == AIM 92
     cnn_eps = 48 # 25 == 90.85, 30 == 90.77, 35 == 90.810000%, 40 eps == 91.26 acc, 45 == 90.630000%, 50 == 91.030000%
-#layer1_k = (3, 3) # (2, 2)
-#layer2_k = (3, 3) # (1, 1)
-#pool_size = (2, 2) # (2, 2)
 elif DATASET == "cifar_10":
     NUM_CLASSES = 10
     IH = 32
@@ -70,7 +69,6 @@ elif DATASET == "cifar_10":
     cnn_eps = 35
     # layer1: (6,6), layer2: (5, 5), pool: (2, 2) == 51.12%
 elif DATASET == "cifar_100_f": # fine class
-    # TODO: THIS IS STILL VERY VERY WRONG!!!!
     NUM_CLASSES = 100
     IH = 32
     IW = 32
@@ -82,7 +80,6 @@ elif DATASET == "cifar_100_f": # fine class
     # CNN Hyperparameters
     cnn_eps = 100
 elif DATASET == "cifar_100_c": # coarse class
-		# TODO: this too :/
     NUM_CLASSES = 20
     IH = 32
     IW = 32
@@ -92,7 +89,7 @@ elif DATASET == "cifar_100_c": # coarse class
     tf_eps = 70
     tfNeuronsPerLayer = 512
     # CNN Hyperparameters
-    cnn_eps = 100
+    cnn_eps = 77
 
 # ================================ < Classifier Functions > ================================ #
 # Guesser Classifier
@@ -141,31 +138,11 @@ def buildTFConvNet(x, y, eps = 10, dropout = True, dropRate = 0.2):
             return load_model()
         model = cifar_100_f_model_layers(model, dropout, inShape)
     elif DATASET == "cifar_100_c":
-       model = cifar_100_c_model_layers(model, dropout, inShape)
+        if load_model:
+            return load_model()
+        model = cifar_100_c_model_layers(model, dropout, inShape)
 
     print('Saving model to ' + DATASET + '_model.h5')
-    '''if dropout:
-                    model.add(keras.layers.Conv2D(32, kernel_size = layer1_k, activation="relu", input_shape=inShape))
-                    model.add(keras.layers.Conv2D(32, kernel_size = layer2_k, activation="relu"))
-                    model.add(keras.layers.MaxPooling2D(pool_size = pool_size, padding='same'))
-                    model.add(keras.layers.Dropout(0.25)) # 0.25
-            
-                    model.add(keras.layers.Conv2D(64, kernel_size = layer1_k, activation="relu"))
-                    model.add(keras.layers.Conv2D(64, kernel_size = layer2_k, activation="relu"))
-                    model.add(keras.layers.MaxPooling2D(pool_size = pool_size))
-                    model.add(keras.layers.Dropout(0.25)) # 0.25
-            
-                    model.add(keras.layers.Flatten())
-                    model.add(keras.layers.Dense(256, activation = 'relu')) # 128
-                    model.add(keras.layers.Dropout(0.5)) # 0.5
-                    model.add(keras.layers.Dense(NUM_CLASSES, activation = 'softmax'))
-                else:
-                    model.add(keras.layers.Conv2D(32, kernel_size = layer1_k, activation="relu", input_shape=inShape))
-                    model.add(keras.layers.Conv2D(64, kernel_size = layer2_k, activation="relu"))
-                    model.add(keras.layers.MaxPooling2D(pool_size = pool_size))
-                    model.add(keras.layers.Flatten())
-                    model.add(keras.layers.Dense(128, activation = 'relu'))
-                    model.add(keras.layers.Dense(NUM_CLASSES, activation = 'softmax'))'''
     model.compile(optimizer=opt, loss=lossType)
     model.fit(x, y, epochs = eps)
     model.save(DATASET + '_model.h5')
@@ -429,6 +406,10 @@ def evalResults(data, preds):
     print("Classifier algorithm: %s" % ALGORITHM)
     print("Classifier accuracy: %f%%" % (accuracy * 100))
     print()
+
+# Function to plot accuracy of ANN and CNN data set
+def makePlots():
+	pass
 
 # ================================================ < Main > ================================================ #
 def main():

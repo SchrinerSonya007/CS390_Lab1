@@ -21,7 +21,8 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 ALGORITHM = "tf_conv"
 
 # ================================ < START: Parameters For loading Saved Models Here > ================================ #
-load_model = True
+#load_model = True
+load_model = False
 #save_model = True
 save_model = False
 #plot = True 
@@ -148,10 +149,13 @@ def buildTFConvNet(x, y, eps = 10, dropout = True, dropRate = 0.2):
     elif DATASET == "cifar_100_c":
         model = cifar_100_c_model_layers(model, dropout, inShape)
 
-    print('Saving model to ' + DATASET + '_model.h5')
     model.compile(optimizer=opt, loss=lossType)
     model.fit(x, y, epochs = eps)
-    model.save(DATASET + '_model.h5')
+    
+    # Save Model
+    if save_model:
+        print('Saving model to ' + DATASET + '_model.h5')
+        model.save(DATASET + '_model.h5')
     return model
 
 # Add layers for mnist digit data set
@@ -168,9 +172,6 @@ def mnist_d_model_layers(model, dropout, inShape):
         model.add(keras.layers.Dropout(0.5)) # 0.5
     model.add(keras.layers.Dense(NUM_CLASSES, activation = 'softmax'))
 
-    # Save Model
-    if save_model:
-        model.save(DATASET + '_model.h5')
     return model
 
 # Add layers for mnist fashion data set
@@ -193,9 +194,6 @@ def mnist_f_model_layers(model, dropout, inShape):
         model.add(keras.layers.Dropout(0.5)) # 0.5
     model.add(keras.layers.Dense(NUM_CLASSES, activation = 'softmax'))
 
-    # Save Model
-    if save_model:
-        model.save(DATASET + '_model.h5')
     return model
 
 # Add layers for cifar 10 data set
@@ -227,9 +225,6 @@ def cifar_10_model_layers(model, dropout, inShape):
         model.add(keras.layers.Dropout(0.2)) # 0.5
     model.add(keras.layers.Dense(NUM_CLASSES, activation = 'softmax'))
 
-    # Save Model
-    if save_model:
-        model.save(DATASET + '_model.h5')
     return model
 
 # Add layers for cifar 100 fine data set
@@ -267,9 +262,6 @@ def cifar_100_f_model_layers(model, dropout, inShape):
         model.add(keras.layers.Dropout(0.2)) # 0.5
     model.add(keras.layers.Dense(NUM_CLASSES, activation = 'softmax'))
 
-    # Save Model
-    if save_model:
-        model.save(DATASET + '_model.h5')
     return model
 
 # Add layers for cifar 100 coarse data set aiming for an accuracy of 50%
@@ -309,9 +301,6 @@ def cifar_100_c_model_layers(model, dropout, inShape):
         model.add(keras.layers.Dropout(0.1)) # 0.2
     model.add(keras.layers.Dense(NUM_CLASSES, activation = 'softmax'))
 
-    # Save Model
-    if save_model:
-        model.save(DATASET + '_model.h5')
     return model
 
 # Load Model

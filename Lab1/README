@@ -1,0 +1,15 @@
+
+NOTE: Parameters load_model and save_model at the top of Lab1.py load and save a model
+for a given data set respectively. I have the trained models corresponding to my 
+training outputs in the folder to make grading easier. Also the variable plot calls
+my function to create the bar graph instead of training or loading a model.
+
+
+First, to improve the accuracy of the CNN I created different functions for each
+data set that would create different layers in the CNN architecture. Then in 
+each of these models I tuned the hyperparameters. I adjusted pool size, filter size,
+number of layers, dropout, and number of epochs. To find the correct combination of
+parameters I would start a couple training sessions on cuda and dump the training
+outputs to txt files, and see what parameters optimized accuracy. I also added 
+functionality to save and load the trained models, because training was such a 
+time consuming process.

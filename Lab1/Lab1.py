@@ -22,10 +22,11 @@ ALGORITHM = "tf_conv"
 
 # ================================ < START: Parameters For loading Saved Models Here > ================================ #
 load_model = True
-save_model = True
+#save_model = True
+save_model = False
 #plot = True 
 plot = False
-# ================================ < END:  Parameters For loading Saved Models Here > ================================ #
+# ================================= < END: Parameters For loading Saved Models Here > ================================= #
 
 DATASET = "mnist_d" #GOAL: 99%
 #DATASET = "mnist_f" #GOAL: 92%
@@ -132,7 +133,7 @@ def buildTFConvNet(x, y, eps = 10, dropout = True, dropRate = 0.2):
     lossType = keras.losses.categorical_crossentropy
     opt = tf.train.AdamOptimizer()
 		
-		# Load a saved model
+	# Load a saved model
     if load_model:
         return loadModel(DATASET + '_model.h5')
 
@@ -316,7 +317,6 @@ def cifar_100_c_model_layers(model, dropout, inShape):
 # Load Model
 def loadModel(file):
 		print('Loading a saved model instead of training')
-#model = keras.models.load_model(DATASET + '_model.h5')
 		model = keras.models.load_model(file)
 		return model
 
@@ -416,47 +416,55 @@ def evalResults(data, preds):
 
 # Function to plot accuracy of ANN and CNN data set
 def makePlots():
-	global ALGORITHM
-	global DATASET
-	dataSets = ["mnist_d", "mnist_f", "cifar_10", "cifar_100_f", "cifar_100_c"]
-	index = np.arange(len(dataSets))
-	
-	# Make plot for tf_net
-	fileName = 'ANN_Accuracy_Plot.pdf'
-	accuracy_percent = []
-	ALGORITHM = 'tf_net'
-	for dataS in dataSets:
-	  DATASET = dataS
-	  setGlobals()
-	  raw = getRawData()
-	  data = preprocessData(raw)
-	  model = trainModel(data[0])
-	  preds = runModel(data[1][0], model)
-	  accuracy_percent.append(evalResults(data[1], preds))
+    global ALGORITHM
+    global DATASET
+    dataSets = ["mnist_d", "mnist_f", "cifar_10", "cifar_100_f", "cifar_100_c"]
+    index = np.arange(len(dataSets))
 
-	print(accuracy_percent)
-	plt.bar(index, np.array(accuracy_percent))
-	
-	plt.xlabel('Dataset')
-	plt.ylabel('Accuracy')
-	plt.xticks(index, dataSets, fontsize=5, rotation=30)
-	plt.title('Accuracy in % for ANN')
+    # Make plot for tf_net
+    fileName = 'ANN_Accuracy_Plot.pdf'
+    accuracy_percent = []
+    ALGORITHM = 'tf_net'
+    for dataS in dataSets:
+        DATASET = dataS
+        setGlobals()
+        raw = getRawData()
+        data = preprocessData(raw)
+        model = trainModel(data[0])
+        preds = runModel(data[1][0], model)
+        accuracy_percent.append(evalResults(data[1], preds))
 
-	# Make plot for tf_conv
-	fileName = 'CNN_Accuracy_Plot.pdf'
-	accuracy_percent = []
-	ALGORITHM = 'tf_conv'
-	for dataS in dataSets:
-		# add to plot
-		a = 1+1
+    print(accuracy_percent)
+    plt.bar(index, np.array(accuracy_percent))
+    plt.xlabel('Dataset')
+    plt.ylabel('Accuracy')
+    plt.xticks(index, dataSets, fontsize=5, rotation=30)
+    plt.title('Accuracy in % for ANN')
+    plt.savefig(fileName, format='pdf')
+    plt.show()
 
-	plt.bar(index, accuracy_percent)
-	plt.xlabel('Dataset')
-	plt.ylabel('Accuracy')
-	plt.xticks(index, dataSets, fontsize=5, rotation=30)
-	plt.title('Accuracy in % for CNN')
+    # Make plot for tf_conv
+    fileName = 'CNN_Accuracy_Plot.pdf'
+    accuracy_percent = []
+    ALGORITHM = 'tf_conv'
+    for dataS in dataSets:
+        DATASET = dataS
+        setGlobals()
+        raw = getRawData()
+        data = preprocessData(raw)
+        model = trainModel(data[0])
+        preds = runModel(data[1][0], model)
+        accuracy_percent.append(evalResults(data[1], preds))
 
-	return
+    print(accuracy_percent)
+    plt.bar(index, np.array(accuracy_percent))
+    plt.xlabel('Dataset')
+    plt.ylabel('Accuracy')
+    plt.xticks(index, dataSets, fontsize=5, rotation=30)
+    plt.title('Accuracy in % for CNN')
+    plt.savefig(fileName, format='pdf')
+    plt.show()
+    return
 
 def setGlobals():
 	global NUM_CLASSES, IH, IW, IZ, IS, load_model

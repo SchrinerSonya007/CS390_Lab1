@@ -3,7 +3,7 @@ import os
 import random
 import numpy as np
 import tensorflow as tf
-import matplotlib as plt
+import matplotlib.pyplot as plt
 
 from tensorflow import keras
 from tensorflow.keras.utils import to_categorical
@@ -23,13 +23,15 @@ ALGORITHM = "tf_conv"
 # ================================ < START: Parameters For loading Saved Models Here > ================================ #
 load_model = True
 save_model = True
+#plot = True 
+plot = False
 # ================================ < END:  Parameters For loading Saved Models Here > ================================ #
 
-#DATASET = "mnist_d"
-#DATASET = "mnist_f"
-#DATASET = "cifar_10"
-#DATASET = "cifar_100_f"
-DATASET = "cifar_100_c"
+DATASET = "mnist_d" #GOAL: 99%
+#DATASET = "mnist_f" #GOAL: 92%
+#DATASET = "cifar_10" #GOAL: 70%
+#DATASET = "cifar_100_f" # GOAL: 35%
+#DATASET = "cifar_100_c" # GOAL: 50% 
 
 if DATASET == "mnist_d":
     NUM_CLASSES = 10
@@ -108,10 +110,19 @@ def buildTFNeuralNet(x, y, eps = 70):
     optimizer = tf.train.AdamOptimizer()
     inShape = (x.shape[1], ) 
     
+		# Load a saved model
+    if load_model:
+        return loadModel(DATASET + '_model_ann.h5')
+
     model.add(keras.layers.Dense(tfNeuronsPerLayer, input_shape=inShape, activation = 'sigmoid')) 
     model.add(keras.layers.Dense(NUM_CLASSES, activation = 'softmax'))
     model.compile(optimizer=optimizer, loss=lossType)
     model.fit(x, y, epochs=eps)
+
+    # Save Model
+    if save_model:
+        model.save(DATASET + '_model_ann.h5')
+        print('Saving model to ' + DATASET + '_model_ann.h5')
     return model
 
 # Convolutional Network - using Keras with dropouts
@@ -120,26 +131,20 @@ def buildTFConvNet(x, y, eps = 10, dropout = True, dropRate = 0.2):
     inShape = (IH, IW, IZ) # Input height, width, depth
     lossType = keras.losses.categorical_crossentropy
     opt = tf.train.AdamOptimizer()
+		
+		# Load a saved model
+    if load_model:
+        return loadModel(DATASET + '_model.h5')
 
     if DATASET == 'mnist_d':
-        if load_model:
-            return load_model()
         model = mnist_d_model_layers(model, dropout, inShape)
     elif DATASET == 'mnist_f':
-        if load_model:
-            return load_model()
         model = mnist_f_model_layers(model, dropout, inShape)
     elif DATASET == "cifar_10":
-        if load_model:
-            return load_model()
         model = cifar_10_model_layers(model, dropout, inShape)
     elif DATASET == "cifar_100_f":
-        if load_model:
-            return load_model()
         model = cifar_100_f_model_layers(model, dropout, inShape)
     elif DATASET == "cifar_100_c":
-        if load_model:
-            return load_model()
         model = cifar_100_c_model_layers(model, dropout, inShape)
 
     print('Saving model to ' + DATASET + '_model.h5')
@@ -309,10 +314,11 @@ def cifar_100_c_model_layers(model, dropout, inShape):
     return model
 
 # Load Model
-def load_model():
-    print('Loading saved ')
-    model = keras.models.load_model(DATASET + '_model.h5')
-    return model
+def loadModel(file):
+		print('Loading a saved model instead of training')
+#model = keras.models.load_model(DATASET + '_model.h5')
+		model = keras.models.load_model(file)
+		return model
 
 # ================================== < Pipeline Functions > ================================== #
 # Load Data
@@ -406,13 +412,93 @@ def evalResults(data, preds):
     print("Classifier algorithm: %s" % ALGORITHM)
     print("Classifier accuracy: %f%%" % (accuracy * 100))
     print()
+    return accuracy * 100
 
 # Function to plot accuracy of ANN and CNN data set
 def makePlots():
-	pass
+	global ALGORITHM
+	global DATASET
+	dataSets = ["mnist_d", "mnist_f", "cifar_10", "cifar_100_f", "cifar_100_c"]
+	index = np.arange(len(dataSets))
+	
+	# Make plot for tf_net
+	fileName = 'ANN_Accuracy_Plot.pdf'
+	accuracy_percent = []
+	ALGORITHM = 'tf_net'
+	for dataS in dataSets:
+	  DATASET = dataS
+	  setGlobals()
+	  raw = getRawData()
+	  data = preprocessData(raw)
+	  model = trainModel(data[0])
+	  preds = runModel(data[1][0], model)
+	  accuracy_percent.append(evalResults(data[1], preds))
+
+	print(accuracy_percent)
+	plt.bar(index, np.array(accuracy_percent))
+	
+	plt.xlabel('Dataset')
+	plt.ylabel('Accuracy')
+	plt.xticks(index, dataSets, fontsize=5, rotation=30)
+	plt.title('Accuracy in % for ANN')
+
+	# Make plot for tf_conv
+	fileName = 'CNN_Accuracy_Plot.pdf'
+	accuracy_percent = []
+	ALGORITHM = 'tf_conv'
+	for dataS in dataSets:
+		# add to plot
+		a = 1+1
+
+	plt.bar(index, accuracy_percent)
+	plt.xlabel('Dataset')
+	plt.ylabel('Accuracy')
+	plt.xticks(index, dataSets, fontsize=5, rotation=30)
+	plt.title('Accuracy in % for CNN')
+
+	return
+
+def setGlobals():
+	global NUM_CLASSES, IH, IW, IZ, IS, load_model
+	load_model = True
+	if DATASET == "mnist_d":
+	    NUM_CLASSES = 10
+	    IH = 28 # height
+	    IW = 28 # width
+	    IZ = 1 # depth
+	    IS = 784
+	elif DATASET == "mnist_f":
+	    NUM_CLASSES = 10
+	    IH = 28
+	    IW = 28
+	    IZ = 1
+	    IS = 784
+	elif DATASET == "cifar_10":
+	    NUM_CLASSES = 10
+	    IH = 32
+	    IW = 32
+	    IZ = 3
+	    IS = 3072
+	elif DATASET == "cifar_100_f": # fine class
+	    NUM_CLASSES = 100
+	    IH = 32
+	    IW = 32
+	    IZ = 3
+	    IS = 3072
+	elif DATASET == "cifar_100_c": # coarse class
+	    NUM_CLASSES = 20
+	    IH = 32
+	    IW = 32
+	    IZ = 3
+	    IS = 3072
 
 # ================================================ < Main > ================================================ #
 def main():
+		# Generate Bar graphs instead of running 
+    if plot:
+      makePlots()
+      return
+
     raw = getRawData()
     data = preprocessData(raw)
     model = trainModel(data[0])

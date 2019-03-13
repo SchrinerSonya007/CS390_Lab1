@@ -26,8 +26,8 @@ save_model = True
 #DATASET = "mnist_d"
 #DATASET = "mnist_f"
 #DATASET = "cifar_10"
-#DATASET = "cifar_100_f"
-DATASET = "cifar_100_c"
+DATASET = "cifar_100_f"
+#DATASET = "cifar_100_c"
 
 if DATASET == "mnist_d":
     NUM_CLASSES = 10
@@ -80,7 +80,7 @@ elif DATASET == "cifar_100_f": # fine class
     tf_eps = 70
     tfNeuronsPerLayer = 512
     # CNN Hyperparameters
-    cnn_eps = 20
+    cnn_eps = 100
 elif DATASET == "cifar_100_c": # coarse class
 		# TODO: this too :/
     NUM_CLASSES = 20
@@ -92,7 +92,7 @@ elif DATASET == "cifar_100_c": # coarse class
     tf_eps = 70
     tfNeuronsPerLayer = 512
     # CNN Hyperparameters
-    cnn_eps = 25
+    cnn_eps = 100
 
 # ================================ < Classifier Functions > ================================ #
 # Guesser Classifier
@@ -133,9 +133,13 @@ def buildTFConvNet(x, y, eps = 10, dropout = True, dropRate = 0.2):
             return load_model()
         model = mnist_f_model_layers(model, dropout, inShape)
     elif DATASET == "cifar_10":
-       model = cifar_10_model_layers(model, dropout, inShape)
+        if load_model:
+            return load_model()
+        model = cifar_10_model_layers(model, dropout, inShape)
     elif DATASET == "cifar_100_f":
-       model = cifar_100_f_model_layers(model, dropout, inShape)
+        if load_model:
+            return load_model()
+        model = cifar_100_f_model_layers(model, dropout, inShape)
     elif DATASET == "cifar_100_c":
        model = cifar_100_c_model_layers(model, dropout, inShape)
 
@@ -247,35 +251,35 @@ def cifar_10_model_layers(model, dropout, inShape):
 
 # Add layers for cifar 100 fine data set
 def cifar_100_f_model_layers(model, dropout, inShape):
-    l_1 = (3, 3)
-    l_2 = (2, 2)
+    l_1 = (2, 2)
+    l_2 = (1, 1)
     print("32 ==", l_1, ', 64 ==', l_2)
     model.add(keras.layers.Conv2D(32, kernel_size = l_1, activation="relu", input_shape=inShape))
     model.add(keras.layers.Conv2D(64, kernel_size = l_2, activation="relu"))
     model.add(keras.layers.MaxPooling2D(pool_size = (2, 2)))
     if dropout:
-        model.add(keras.layers.Dropout(0.2)) # 0.25
+        model.add(keras.layers.Dropout(0.1)) # 0.25
 
     model.add(keras.layers.Conv2D(32, kernel_size = l_1, activation="relu"))
     model.add(keras.layers.Conv2D(64, kernel_size = l_2, activation="relu"))
     model.add(keras.layers.MaxPooling2D(pool_size = (2, 2)))
     if dropout:
-        model.add(keras.layers.Dropout(0.2)) # 0.25
+        model.add(keras.layers.Dropout(0.1)) # 0.25
 
     model.add(keras.layers.Conv2D(32, kernel_size = l_1, activation="relu", padding='SAME'))
     model.add(keras.layers.Conv2D(64, kernel_size = l_2, activation="relu", padding='SAME'))
     model.add(keras.layers.MaxPooling2D(pool_size = (2, 2), padding='SAME'))
     if dropout:
-        model.add(keras.layers.Dropout(0.2)) # 0.25
+        model.add(keras.layers.Dropout(0.1)) # 0.25
 
     model.add(keras.layers.Conv2D(32, kernel_size = l_1, activation="relu", padding='SAME'))
     model.add(keras.layers.Conv2D(64, kernel_size = l_2, activation="relu", padding='SAME'))
     model.add(keras.layers.MaxPooling2D(pool_size = (2, 2), padding='SAME'))
     if dropout:
-        model.add(keras.layers.Dropout(0.2)) # 0.25
+        model.add(keras.layers.Dropout(0.1)) # 0.25
 
     model.add(keras.layers.Flatten())
-    model.add(keras.layers.Dense(256, activation = 'relu')) # 128
+    model.add(keras.layers.Dense(384, activation = 'relu')) # 128
     if dropout:
         model.add(keras.layers.Dropout(0.2)) # 0.5
     model.add(keras.layers.Dense(NUM_CLASSES, activation = 'softmax'))
@@ -287,37 +291,39 @@ def cifar_100_f_model_layers(model, dropout, inShape):
 
 # Add layers for cifar 100 coarse data set aiming for an accuracy of 50%
 def cifar_100_c_model_layers(model, dropout, inShape):
-    l_1 = (3, 3)
-    l_2 = (2, 2)
+    l_1 = (2, 2)
+    l_2 = (1, 1)
     print("32 ==", l_1, ', 64 ==', l_2)
     model.add(keras.layers.Conv2D(32, kernel_size = l_1, activation="relu", input_shape=inShape))
     model.add(keras.layers.Conv2D(64, kernel_size = l_2, activation="relu"))
     model.add(keras.layers.MaxPooling2D(pool_size = (2, 2)))
     if dropout:
-        model.add(keras.layers.Dropout(0.2)) # 0.25
+        model.add(keras.layers.Dropout(0.1)) # 0.15 ---> 0.1
 
     model.add(keras.layers.Conv2D(32, kernel_size = l_1, activation="relu"))
     model.add(keras.layers.Conv2D(64, kernel_size = l_2, activation="relu"))
     model.add(keras.layers.MaxPooling2D(pool_size = (2, 2)))
     if dropout:
-        model.add(keras.layers.Dropout(0.2)) # 0.25
+        model.add(keras.layers.Dropout(0.1)) # 0.15 ---> 0.1
 
     model.add(keras.layers.Conv2D(32, kernel_size = l_1, activation="relu", padding='SAME'))
     model.add(keras.layers.Conv2D(64, kernel_size = l_2, activation="relu", padding='SAME'))
     model.add(keras.layers.MaxPooling2D(pool_size = (2, 2), padding='SAME'))
     if dropout:
-        model.add(keras.layers.Dropout(0.2)) # 0.25
+        model.add(keras.layers.Dropout(0.1)) # 0.15 ---> 0.1
 
     model.add(keras.layers.Conv2D(32, kernel_size = l_1, activation="relu", padding='SAME'))
     model.add(keras.layers.Conv2D(64, kernel_size = l_2, activation="relu", padding='SAME'))
     model.add(keras.layers.MaxPooling2D(pool_size = (2, 2), padding='SAME'))
     if dropout:
-        model.add(keras.layers.Dropout(0.2)) # 0.25
+        model.add(keras.layers.Dropout(0.1)) # 0.15 ---> 0.1
 
     model.add(keras.layers.Flatten())
-    model.add(keras.layers.Dense(256, activation = 'relu')) # 128
+    model.add(keras.layers.Dense(384, activation = 'relu')) # 128 ---> 256
+    print("526 nodes")
+
     if dropout:
-        model.add(keras.layers.Dropout(0.2)) # 0.5
+        model.add(keras.layers.Dropout(0.1)) # 0.2
     model.add(keras.layers.Dense(NUM_CLASSES, activation = 'softmax'))
 
     # Save Model
